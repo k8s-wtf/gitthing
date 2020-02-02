@@ -3,20 +3,24 @@ package gitthing
 import "time"
 
 type Config struct {
-	PollFreq time.Duration
+	Global Global `yaml:"global",yaml:"global"`
 }
 
-type Repos []Repo
+type Global struct {
+	PollFrequency time.Duration `yaml:"pollFrequency"`
+	PublicAddress string        `yaml:"publicAddress"`
+	SshKeyPath    string        `yaml:"sshKeyPath"`
+}
 
 type Repo struct {
-	Url        string `json:"url"`
-	Path       string `json:"path"`
-	Ref        string `json:"ref"`
-	SshKeyPath string `json:"sshKeyPath"`
+	Url        string `yaml:"url"`
+	Path       string `yaml:"path"`
+	Ref        string `yaml:"ref"`
+	SshKeyPath string `yaml:"sshKeyPath"`
 }
 
 type Provider struct {
-	Name  string `json:"name"`
-	Match string `json:"match"`
-	//PollFreq time.Duration `json:"pollFreq"`
+	Name  string `yaml:"name"`
+	Match string `yaml:"match"`
+	//PollFreq time.Duration `yaml:"pollFreq"` // TODO - implement later
 }
