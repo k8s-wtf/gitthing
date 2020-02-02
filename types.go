@@ -18,5 +18,5 @@ type Repo struct {
 type Provider struct {
 	Name  string `json:"name"`
 	Match string `json:"match"`
-	PollFreq time.Duration `json:"pollFreq"`
+	//PollFreq time.Duration `json:"pollFreq"`
 }
