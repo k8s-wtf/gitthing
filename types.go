@@ -3,8 +3,8 @@ package gitthing
 import "time"
 
 type Config struct {
-	Global Global `yaml:"global",yaml:"global"`
-	Repos         []Repo        `yaml:"repos"`
+	Global Global `yaml:"global"`
+	Repos  []Repo `yaml:"repos"`
 }
 
 type Global struct {

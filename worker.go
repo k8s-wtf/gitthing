@@ -9,32 +9,51 @@ import (
 )
 
 type GitWorker struct {
-	sshKeyPath    string
+	cloneOptions  *git.CloneOptions
+	checkoutPath  string
 	repo          string
 	branchPattern string
 }
 
-func NewGitWorker(sshKeyPath string, repo string, branchPattern string) *GitWorker {
-	return &GitWorker{sshKeyPath: sshKeyPath, repo: repo, branchPattern: branchPattern}
-}
-
-func (gw *GitWorker) Do() (err error) {
-	pem, err := ioutil.ReadFile(gw.sshKeyPath)
+func NewGitWorker(sshKeyPath string, repo string, branchPattern string) (*GitWorker, error) {
+	pem, err := ioutil.ReadFile(sshKeyPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	signer, err := ssh.ParsePrivateKey(pem)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	auth := &ssh2.PublicKeys{
-		User:                  "git",
-		Signer:                signer,
+		User:   "git",
+		Signer: signer,
 	}
-	_, err = git.PlainClone(gw.repo, false, &git.CloneOptions{
-		URL:      gw.repo,
+	cloneOpts := &git.CloneOptions{
+		URL:      repo,
 		Auth:     auth,
 		Progress: os.Stdout,
+	}
+	return &GitWorker{cloneOptions: cloneOpts, repo: repo, branchPattern: branchPattern}, nil
+}
+
+func (gw *GitWorker) Clone() (err error) {
+	_, err = git.PlainClone("foo", false, gw.cloneOptions)
+	return err
+}
+
+func (gw *GitWorker) Fetch() error {
+	r, err := git.PlainOpen("foo")
+	if err != nil {
+		return err
+	}
+	err = r.Fetch(&git.FetchOptions{
+		RemoteName: "",
+		RefSpecs:   nil,
+		Depth:      0,
+		Auth:       nil,
+		Progress:   nil,
+		Tags:       0,
+		Force:      false,
 	})
 	return err
 }

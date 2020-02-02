@@ -12,7 +12,7 @@ const configPath = "example-config.yaml"
 func main() {
 	configRaw, err := ioutil.ReadFile(configPath)
 	if err != nil {
-		log.Fatalf("opening configfile: %s", err)
+		log.Fatalf("opening config file: %s", err)
 	}
 	config := &gitthing.Config{}
 	err = yaml.Unmarshal(configRaw, config)
@@ -21,8 +21,11 @@ func main() {
 	}
 
 	for _, i := range config.Repos {
-		w := gitthing.NewGitWorker(i.SshKeyPath, i.Url, "")
-		err := w.Do()
+		w, err := gitthing.NewGitWorker(i.SshKeyPath, i.Url, "")
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = w.Clone()
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
