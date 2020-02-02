@@ -1,6 +1,7 @@
 package gitthing
 
 import (
+	"fmt"
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/src-d/go-git.v4"
 	ssh2 "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
@@ -31,10 +32,46 @@ func (gw *GitWorker) Do() (err error) {
 		User:                  "git",
 		Signer:                signer,
 	}
-	_, err = git.PlainClone(gw.repo, false, &git.CloneOptions{
-		URL:      gw.repo,
-		Auth:     auth,
-		Progress: os.Stdout,
-	})
+	fmt.Println(gw.repo)
+	GitPath := fmt.Sprintf("%s\n", gw.repo)
+	if _, err := os.Stat(GitPath); os.IsNotExist(err) {
+		fmt.Sprintln("doing first clone for: %s", gw.repo)
+		_, err = git.PlainClone(GitPath, false, &git.CloneOptions{
+			URL:      gw.repo,
+			Auth:     auth,
+			Progress: os.Stdout,
+		})
+		return err
+	}
+
+
+	fmt.Sprintln("doing force pull for: %s", gw.repo)
+	r, err := git.PlainOpen(GitPath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	remotes, err := r.Remotes()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for _, remote := range remotes {
+		fmt.Println("Fetching: ", remote.Config().Name, "via", remote.Config().URLs)
+		err := remote.Fetch(&git.FetchOptions{
+			RemoteName: remote.Config().Name,
+			Force:      true,
+			Auth:     auth,
+			Progress: os.Stdout,
+
+		})
+		if err != nil && err != git.NoErrAlreadyUpToDate {
+			fmt.Println("Error:", remote.Config().Name, err)
+			continue
+		}
+	}
 	return err
+
 }
