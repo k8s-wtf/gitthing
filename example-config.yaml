@@ -1,0 +1,18 @@
+---
+
+
+global:
+  pollFrequency: 5m #how often to refresh
+  sshKeyPath: /default-id-rsa
+  publicAddress: https://gitthing.myorg.com
+
+providers:
+- name: github
+  org: example-org
+
+repos:
+- url: git@github.com:example-org/repo.git
+  path: /             # subdirectory to hash
+  sshKeyPath: /id-rsa # override global
+  pollFrequency: 1m   # over-ride global
+
