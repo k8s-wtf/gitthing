@@ -1,7 +1,6 @@
 package gitthing
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -22,7 +21,7 @@ func (r *RecLoop) Run() {
 		case <-ticker.C:
 			println("tick")
 		case c := <-r.stop:
-			c <- fmt.Errorf("it works")
+			c <- nil
 		}
 	}
 }
