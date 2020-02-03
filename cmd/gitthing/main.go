@@ -1,10 +1,11 @@
 package main
 
 import (
+	"io/ioutil"
+
 	"github.com/go-yaml/yaml"
 	"github.com/k8s-wtf/gitthing"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
 )
 
 const configPath = "example-config.yaml"
