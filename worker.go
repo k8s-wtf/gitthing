@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -35,10 +37,11 @@ func (gw *GitWorker) Do() (err error) {
 		User:   "git",
 		Signer: signer,
 	}
-	fmt.Println(gw.repo)
-	GitPath := fmt.Sprintf("%s\n", gw.repo)
+	log.Println(gw.repo)
+	GitPath := fmt.Sprintf("%s", gw.repo)
+	log.Debugf("GitPath: %s", GitPath)
 	if _, err := os.Stat(GitPath); os.IsNotExist(err) {
-		fmt.Printf("doing first clone for: %s\n", gw.repo)
+		log.Printf("doing first clone for: %s\n", gw.repo)
 		_, err = git.PlainClone(GitPath, false, &git.CloneOptions{
 			URL:      gw.repo,
 			Auth:     auth,
@@ -47,22 +50,22 @@ func (gw *GitWorker) Do() (err error) {
 		return err
 	}
 
-	fmt.Printf("doing force pull for: %s\n", gw.repo)
+	log.Printf("doing force pull for: %s\n", gw.repo)
 	r, err := git.PlainOpen(GitPath)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 
 	remotes, err := r.Remotes()
 	if err != nil {
-		fmt.Println(err)
+		log.Errorln(err)
 		return
 	}
 
 	for _, remote := range remotes {
-		fmt.Println("remote: ", remote)
-		fmt.Println("Fetching: ", remote.Config().Name, "via", remote.Config().URLs)
+		log.Println("remote: ", remote)
+		log.Println("Fetching: ", remote.Config().Name, "via", remote.Config().URLs)
 		err := remote.Fetch(&git.FetchOptions{
 			RemoteName: remote.Config().Name,
 			Force:      true,
@@ -70,11 +73,15 @@ func (gw *GitWorker) Do() (err error) {
 			// Progress:   os.Stdout,
 		})
 		if err != nil && err != git.NoErrAlreadyUpToDate {
-			fmt.Println("Error:", remote.Config().Name, err)
+			log.Println("Error:", remote.Config().Name, err)
 			continue
 		}
 	}
 
+	branches, err := ListBranches(GitPath)
+	for _, b := range branches {
+		fmt.Println("detected branch: " + b)
+	}
 	return err
 
 }
@@ -92,10 +99,14 @@ func (gw *GitWorker) Do() (err error) {
 func ListBranches(GitPath string) (branchList []string, err error) {
 
 	r, err := git.PlainOpen(GitPath)
-	CheckIfError(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	refs, err := r.References()
-	CheckIfError(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	err = refs.ForEach(func(ref *plumbing.Reference) error {
 		branchName := ref.Name().String()
