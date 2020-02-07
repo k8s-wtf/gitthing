@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -81,8 +83,31 @@ func (gw *GitWorker) Do() (err error) {
 	branches, err := ListBranches(GitPath)
 	for _, b := range branches {
 		fmt.Println("detected branch: " + b)
+		err := CheckoutBranch(GitPath, b)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		ExecTest(GitPath)
+		log.Infoln("Sleeping a bit")
+		time.Sleep(10 * time.Second)
 	}
 	return err
+
+}
+
+
+
+func ExecTest(GitPath string) {
+
+	cmd := exec.Command("tree")
+	cmd.Dir = GitPath
+	out, err := cmd.Output()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Infof("---\n%s\n---\n", out)
 
 }
 
@@ -95,7 +120,6 @@ func (gw *GitWorker) Do() (err error) {
 //	for _, b := range branches {
 //		fmt.Println("detected branch: " + b)
 //	}
-
 func ListBranches(GitPath string) (branchList []string, err error) {
 
 	r, err := git.PlainOpen(GitPath)
@@ -119,4 +143,39 @@ func ListBranches(GitPath string) (branchList []string, err error) {
 	})
 	return branchList, err
 
+}
+
+// CheckoutBranch will effectively "cd" into a git repo and do a git checkout
+// NOTE.. this will prefix "refs/remotes/origin/" to 'BranchName'
+func CheckoutBranch(GitPath string, BranchName string) (err error) {
+
+	//CheckMeOut := fmt.Sprintf("refs/remotes/origin/" + BranchName)
+	//r, _ := git.PlainClone(GitPath, false, &git.CloneOptions{
+	//	URL: url,
+	//})
+	r, err := git.PlainOpen(GitPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	w, _ := r.Worktree()
+
+	//err = r.Fetch(&git.FetchOptions{
+	//	RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"},
+	//	Force: true,
+	//})
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	err = w.Checkout(&git.CheckoutOptions{
+		//Branch: plumbing.ReferenceName("refs/heads/" + BranchName),
+		//Branch: plumbing.ReferenceName(BranchName),
+		Branch: plumbing.ReferenceName("refs/remotes/origin/" + BranchName),
+		Force: true,
+		Keep: false,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("[%s] checked out branch: %s\n", GitPath, BranchName)
+	return err
 }
