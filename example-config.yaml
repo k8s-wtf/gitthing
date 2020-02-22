@@ -2,7 +2,7 @@
 
 
 global:
-  pollFrequency: 5m #how often to refresh
+  pollFrequency: 15s # how often to refresh
   sshKeyPath: id-rsa
   publicAddress: https://gitthing.myorg.com
 
@@ -14,5 +14,5 @@ repos:
 - url: git@github.com:k8s-wtf/gitthing-example.git
   path: /             # subdirectory to hash
   sshKeyPath: id-rsa
-  pollFrequency: 1m   # over-ride global
+  # pollFrequency: 5s   # over-ride global
 

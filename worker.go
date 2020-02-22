@@ -20,13 +20,20 @@ type GitWorker struct {
 	sshKeyPath    string
 	repo          string
 	branchPattern string
+	pollFrequency time.Duration
 }
 
-func NewGitWorker(sshKeyPath string, repo string, branchPattern string) *GitWorker {
-	return &GitWorker{sshKeyPath: sshKeyPath, repo: repo, branchPattern: branchPattern}
+func NewGitWorker(sshKeyPath string, repo string, branchPattern string, pollFrequency time.Duration) *GitWorker {
+	return &GitWorker{
+		sshKeyPath:    sshKeyPath,
+		repo:          repo,
+		branchPattern: branchPattern,
+		pollFrequency: pollFrequency,
+	}
 }
 
 func (gw *GitWorker) Do() (err error) {
+
 	pem, err := ioutil.ReadFile(gw.sshKeyPath)
 	if err != nil {
 		return err
@@ -39,20 +46,20 @@ func (gw *GitWorker) Do() (err error) {
 		User:   "git",
 		Signer: signer,
 	}
-	log.Println(gw.repo)
 	GitPath := fmt.Sprintf("%s", gw.repo)
-	log.Debugf("GitPath: %s", GitPath)
+	log.Debugf("%s: path: %s, branchPattern: [%s]\n", gw.repo, GitPath, gw.branchPattern)
+
 	if _, err := os.Stat(GitPath); os.IsNotExist(err) {
-		log.Printf("doing first clone for: %s\n", gw.repo)
+		log.Printf("%s: doing first clone\n", gw.repo)
 		_, err = git.PlainClone(GitPath, false, &git.CloneOptions{
 			URL:      gw.repo,
 			Auth:     auth,
-			Progress: os.Stdout,
+			//Progress: os.Stdout,
 		})
 		return err
 	}
 
-	log.Printf("doing force pull for: %s\n", gw.repo)
+	log.Printf("%s: doing force pull\n", gw.repo)
 	r, err := git.PlainOpen(GitPath)
 	if err != nil {
 		log.Println(err)
@@ -66,8 +73,8 @@ func (gw *GitWorker) Do() (err error) {
 	}
 
 	for _, remote := range remotes {
-		log.Println("remote: ", remote)
-		log.Println("Fetching: ", remote.Config().Name, "via", remote.Config().URLs)
+		//log.Println("remote: ", remote)
+		log.Println(remote.Config().URLs[0] + ": Fetching:", remote.Config().Name)
 		err := remote.Fetch(&git.FetchOptions{
 			RemoteName: remote.Config().Name,
 			Force:      true,
@@ -82,20 +89,18 @@ func (gw *GitWorker) Do() (err error) {
 
 	branches, err := ListBranches(GitPath)
 	for _, b := range branches {
-		fmt.Println("detected branch: " + b)
+		log.Debugln(GitPath + ": detected branch: " + b)
 		err := CheckoutBranch(GitPath, b)
 		if err != nil {
 			log.Fatalln(err)
 		}
-		ExecTest(GitPath)
-		log.Infoln("Sleeping a bit")
-		time.Sleep(10 * time.Second)
+		// ExecTest(GitPath)
+		// log.Infoln("Sleeping a bit")
+		// time.Sleep(10 * time.Second)
 	}
 	return err
 
 }
-
-
 
 func ExecTest(GitPath string) {
 
@@ -170,12 +175,12 @@ func CheckoutBranch(GitPath string, BranchName string) (err error) {
 		//Branch: plumbing.ReferenceName("refs/heads/" + BranchName),
 		//Branch: plumbing.ReferenceName(BranchName),
 		Branch: plumbing.ReferenceName("refs/remotes/origin/" + BranchName),
-		Force: true,
-		Keep: false,
+		Force:  true,
+		Keep:   false,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Infof("[%s] checked out branch: %s\n", GitPath, BranchName)
+	log.Infof("%s: checked out branch: %s\n", GitPath, BranchName)
 	return err
 }

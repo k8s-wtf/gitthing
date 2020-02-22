@@ -4,7 +4,7 @@ import "time"
 
 type Config struct {
 	Global Global `yaml:"global",yaml:"global"`
-	Repos         []Repo        `yaml:"repos"`
+	Repos  []Repo `yaml:"repos"`
 }
 
 type Global struct {
@@ -14,10 +14,11 @@ type Global struct {
 }
 
 type Repo struct {
-	Url        string `yaml:"url"`
-	Path       string `yaml:"path"`
-	Ref        string `yaml:"ref"`
-	SshKeyPath string `yaml:"sshKeyPath"`
+	Url           string        `yaml:"url"`
+	Path          string        `yaml:"path"`
+	Ref           string        `yaml:"ref"`
+	SshKeyPath    string        `yaml:"sshKeyPath"`
+	PollFrequency time.Duration `yaml:"pollFrequency,omitempty"`
 }
 
 type Provider struct {
