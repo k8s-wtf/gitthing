@@ -1,8 +1,9 @@
 package gitthing
 
 import (
-	log "github.com/sirupsen/logrus"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type RecLoop struct {
@@ -29,7 +30,7 @@ func (r *RecLoop) Run() {
 
 func (r *RecLoop) Trigger() {
 	log.Warnln("tick")
-	for _, job := range r.repos{
+	for _, job := range r.repos {
 		log.Debugln(job)
 		if job.PollFrequency == 0*time.Second {
 			// omitempty will default to time.Duration(0 * time.Second)

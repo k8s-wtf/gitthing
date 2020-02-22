@@ -1,7 +1,6 @@
-package main
+package gitthing
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,16 +9,10 @@ import (
 )
 
 // Stolen from https://gist.github.com/mustafaydemir/c90db8fcefeb4eb89696e6ccb5b28685
-func scanRecursive(dirPath string, ignore []string) ([]string, []string) {
-
-	folders := []string{}
-	files := []string{}
-
+func scanRecursive(dirPath string, ignore []string) (folders []string, files []string) {
 	// Scan
 	filepath.Walk(dirPath, func(path string, f os.FileInfo, err error) error {
-
 		_continue := false
-
 		// Loop : Ignore Files & Folders
 		for _, i := range ignore {
 			// If ignored path
@@ -28,57 +21,38 @@ func scanRecursive(dirPath string, ignore []string) ([]string, []string) {
 				_continue = true
 			}
 		}
-
 		if _continue == false {
-
 			f, err = os.Stat(path)
-
 			// If no error
 			if err != nil {
 				log.Fatal(err)
 			}
-
 			// File & Folder Mode
 			fMode := f.Mode()
-
 			// Is folder
 			if fMode.IsDir() {
-
 				// Append to Folders Array
 				folders = append(folders, path)
-
 				// Is file
 			} else if fMode.IsRegular() {
-
 				// Append to Files Array
 				files = append(files, path)
 			}
 		}
-
 		return nil
 	})
-
 	return folders, files
 }
 
-func main() {
+// PathIndex will index a path o_O
+func PathIndex(path string) {
 
-	GitPath := "git@github.com:k8s-wtf"
 	IgnoreMe := []string{
 		"/.git",
 	}
 
-	folders, files := scanRecursive(GitPath, IgnoreMe)
-
-	// Files
-	log.Infoln("Files")
-	for _, i := range files {
-		fmt.Println(i)
-	}
-
-	// Folders
-	log.Infoln("Folders")
+	folders, _ := scanRecursive(path, IgnoreMe)
 	for _, i := range folders {
-		fmt.Println(i)
+		log.Debugf("found dir: %s\n", i)
 	}
 }

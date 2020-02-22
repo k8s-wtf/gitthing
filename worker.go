@@ -52,8 +52,8 @@ func (gw *GitWorker) Do() (err error) {
 	if _, err := os.Stat(GitPath); os.IsNotExist(err) {
 		log.Printf("%s: doing first clone\n", gw.repo)
 		_, err = git.PlainClone(GitPath, false, &git.CloneOptions{
-			URL:      gw.repo,
-			Auth:     auth,
+			URL:  gw.repo,
+			Auth: auth,
 			//Progress: os.Stdout,
 		})
 		return err
@@ -74,7 +74,7 @@ func (gw *GitWorker) Do() (err error) {
 
 	for _, remote := range remotes {
 		//log.Println("remote: ", remote)
-		log.Println(remote.Config().URLs[0] + ": Fetching:", remote.Config().Name)
+		log.Println(remote.Config().URLs[0]+": Fetching:", remote.Config().Name)
 		err := remote.Fetch(&git.FetchOptions{
 			RemoteName: remote.Config().Name,
 			Force:      true,
@@ -94,9 +94,7 @@ func (gw *GitWorker) Do() (err error) {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		// ExecTest(GitPath)
-		// log.Infoln("Sleeping a bit")
-		// time.Sleep(10 * time.Second)
+		PathIndex(GitPath)
 	}
 	return err
 
