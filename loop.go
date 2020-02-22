@@ -1,6 +1,7 @@
 package gitthing
 
 import (
+	log "github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -19,9 +20,33 @@ func (r *RecLoop) Run() {
 	for {
 		select {
 		case <-ticker.C:
-			println("tick")
+			r.Trigger()
 		case c := <-r.stop:
 			c <- nil
+		}
+	}
+}
+
+func (r *RecLoop) Trigger() {
+	log.Warnln("tick")
+	for _, job := range r.repos{
+		log.Debugln(job)
+		if job.PollFrequency == 0*time.Second {
+			// omitempty will default to time.Duration(0 * time.Second)
+			// Assume Global default
+			job.PollFrequency = r.pollFreq
+		}
+
+		log.Debugf("NewGitWorker: (%v)\n", job)
+		w := NewGitWorker(
+			job.SshKeyPath,
+			job.Url,
+			"",
+			job.PollFrequency,
+		)
+		err := w.Do()
+		if err != nil {
+			log.Fatalf("%s", err)
 		}
 	}
 }
