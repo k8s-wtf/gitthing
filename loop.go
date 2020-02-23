@@ -18,6 +18,7 @@ func NewRecLoop(pollFreq time.Duration, repos []Repo) *RecLoop {
 
 func (r *RecLoop) Run() {
 	ticker := time.NewTicker(r.pollFreq)
+	r.Trigger()
 	for {
 		select {
 		case <-ticker.C:
