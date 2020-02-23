@@ -9,6 +9,7 @@ import (
 )
 
 // Stolen from https://gist.github.com/mustafaydemir/c90db8fcefeb4eb89696e6ccb5b28685
+// modified to only return subdirectories and files (not including the name of the parent)
 func scanRecursive(dirPath string, ignore []string) (folders []string, files []string) {
 	// Scan
 	filepath.Walk(dirPath, func(path string, f os.FileInfo, err error) error {
@@ -29,14 +30,20 @@ func scanRecursive(dirPath string, ignore []string) (folders []string, files []s
 			}
 			// File & Folder Mode
 			fMode := f.Mode()
-			// Is folder
-			if fMode.IsDir() {
-				// Append to Folders Array
-				folders = append(folders, path)
-				// Is file
-			} else if fMode.IsRegular() {
-				// Append to Files Array
-				files = append(files, path)
+
+			// Filter out the top level directory.. we'll already know that name when calling this func
+			path := strings.Replace(path, dirPath, "", 1)
+			if path != "" {
+				// strip leading /
+				// path := strings.Replace(path, "/", "", 1)
+				// Is folder
+				if fMode.IsDir() {
+					folders = append(folders, path)
+					// Is file
+				} else if fMode.IsRegular() {
+					// Append to Files Array
+					files = append(files, path)
+				}
 			}
 		}
 		return nil
@@ -44,8 +51,8 @@ func scanRecursive(dirPath string, ignore []string) (folders []string, files []s
 	return folders, files
 }
 
-// PathIndex will index a path o_O
-func PathIndex(path string) {
+// PathIndex will index a path and return a list of subdirectories
+func PathIndex(path string) (result []string) {
 
 	IgnoreMe := []string{
 		"/.git",
@@ -53,6 +60,8 @@ func PathIndex(path string) {
 
 	folders, _ := scanRecursive(path, IgnoreMe)
 	for _, i := range folders {
-		log.Debugf("found dir: %s\n", i)
+		// log.Debugf("found dir: %s\n", i)
+		result = append(result, i)
 	}
+	return result
 }

@@ -49,6 +49,8 @@ func (gw *GitWorker) Do() (err error) {
 	GitPath := fmt.Sprintf("%s", gw.repo)
 	log.Debugf("%s: path: %s, branchPattern: [%s]\n", gw.repo, GitPath, gw.branchPattern)
 
+	// TODO: investigate timeouts on Clone/Fetch
+	// - https://github.com/src-d/go-git/issues/1150
 	if _, err := os.Stat(GitPath); os.IsNotExist(err) {
 		log.Printf("%s: doing first clone\n", gw.repo)
 		_, err = git.PlainClone(GitPath, false, &git.CloneOptions{
@@ -94,7 +96,10 @@ func (gw *GitWorker) Do() (err error) {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		PathIndex(GitPath)
+		dirs := PathIndex(GitPath)
+
+		HashTree(GitPath, dirs)
+
 	}
 	return err
 
